@@ -31,15 +31,15 @@ I'll create a comprehensive todo list that breaks down the implementation steps.
 
 ### Authentication
 
-- [ ] Configure NextAuth.js
-  - [ ] Set up email provider
-  - [ ] Create auth API routes
-  - [ ] Implement session handling
-  - [ ] Add protected routes
-  - [ ] Create auth middleware
-  - [ ] Add sign in page
-  - [ ] Add sign out functionality
-  - [ ] Implement user session hooks
+- [x] Configure NextAuth.js
+  - [x] Set up email provider
+  - [x] Create auth API routes
+  - [x] Implement session handling
+  - [x] Add protected routes
+  - [x] Create auth middleware
+  - [x] Add sign in page
+  - [x] Add sign out functionality
+  - [x] Implement user session hooks
 
 ## Phase 2: Audio Recording
 
