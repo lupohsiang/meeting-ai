@@ -45,13 +45,13 @@ I'll create a comprehensive todo list that breaks down the implementation steps.
 
 ### Basic Audio Implementation
 
-- [ ] Create AudioContext wrapper
-  - [ ] Implement permission handling
-  - [ ] Set up MediaRecorder
-  - [ ] Configure audio format (WAV, 16000 Hz)
-  - [ ] Add chunk processing
-  - [ ] Implement cleanup handlers
-  - [ ] Add error handling
+- [x] Create AudioContext wrapper
+  - [x] Implement permission handling
+  - [x] Set up MediaRecorder
+  - [x] Configure audio format (audio/webm)
+  - [x] Add chunk processing
+  - [x] Implement cleanup handlers
+  - [x] Add error handling
 
 ### Recording UI
 
