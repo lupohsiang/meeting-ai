@@ -14,18 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -62,7 +50,34 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    meetings      Meeting[]
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+}
+
+model Meeting {
+    id            String    @id @default(cuid())
+    title         String
+    date          DateTime  @default(now())
+    duration      Int       // in seconds
+    audioFilePath String
+    transcript    String
+    user          User      @relation(fields: [userId], references: [id])
+    userId        String
+    todos         Todo[]
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+}
+
+model Todo {
+    id          String   @id @default(cuid())
+    description String
+    priority    String   // High, Medium, Low
+    isComplete  Boolean  @default(false)
+    meeting     Meeting  @relation(fields: [meetingId], references: [id])
+    meetingId   String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 }
 
 model VerificationToken {
