@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { toast } from "sonner";
 
@@ -9,6 +9,8 @@ interface AudioRecorderProps {
 }
 
 export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
+  // Add ref for keyboard focus management
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [timer, setTimer] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -74,10 +76,43 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
       .padStart(2, "0")}`;
   };
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle keyboard shortcuts if the button is focused
+      if (document.activeElement !== buttonRef.current) return;
+
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        if (isRecording) {
+          stopRecording();
+        } else {
+          void startRecording();
+        }
+      } else if (e.code === "Escape" && isRecording) {
+        e.preventDefault();
+        stopRecording();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [isRecording, startRecording, stopRecording]);
+
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="font-mono text-2xl">{formatTime(timer)}</div>
+    <section
+      className="flex flex-col items-center gap-4"
+      aria-label="Audio recording controls"
+    >
+      <div
+        className="font-mono text-2xl"
+        role="timer"
+        aria-label="Recording duration"
+      >
+        {formatTime(timer)}
+      </div>
       <Button
+        ref={buttonRef}
         size="lg"
         className={`h-16 w-16 rounded-full p-0 transition-all duration-200 ${
           isRecording
@@ -95,9 +130,16 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
           }`}
         />
       </Button>
-      {isRecording && (
-        <div className="text-sm text-gray-500">Click to stop recording</div>
-      )}
-    </div>
+      <div className="text-sm text-gray-500" aria-live="polite">
+        {isRecording ? (
+          <span>
+            Recording in progress. Press Space, Enter, or click to stop
+            recording. Press Escape to cancel.
+          </span>
+        ) : (
+          <span>Press Space, Enter, or click to start recording</span>
+        )}
+      </div>
+    </section>
   );
 }
