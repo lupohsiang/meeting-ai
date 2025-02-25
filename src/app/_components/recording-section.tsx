@@ -4,14 +4,30 @@ import { AudioRecorder } from "./audio-recorder";
 import { toast } from "sonner";
 
 export function RecordingSection() {
-  const handleRecordingComplete = async (audioBlob: Blob) => {
-    // For testing, we'll just show a success message with the blob size
-    toast.success(`Recording completed! File size: ${(audioBlob.size / 1024).toFixed(2)}KB`);
-    
-    // Later we'll implement:
-    // 1. Upload to storage
-    // 2. Send for transcription
-    // 3. Process with LLM for todo extraction
+  const handleRecordingComplete = async (audioBlob: Blob, duration: number) => {
+    try {
+      toast.info("Saving recording...");
+
+      const formData = new FormData();
+      formData.append("audio", audioBlob);
+      formData.append("duration", String(duration));
+
+      const response = await fetch("/api/meetings", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save recording");
+      }
+
+      toast.success("Recording saved!");
+    } catch (error) {
+      console.error("Error saving recording:", error);
+      toast.error("Failed to save recording. Please try again.");
+    }
   };
 
   return (

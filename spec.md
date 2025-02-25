@@ -27,6 +27,16 @@ A web application that records meetings, transcribes them, and automatically ext
   - Circular button that morphs into square when recording
   - Pulsing animation during recording
   - Timer display (MM:SS format)
+- User Limits:
+  - Authenticated Users:
+    - Unlimited recordings
+    - No duration limit per recording
+    - Permanent storage
+  - Anonymous Users:
+    - Maximum 3 recordings
+    - 5-minute limit per recording
+    - 24-hour storage period
+    - 50MB total storage limit
 
 ### 3.2 Transcription
 
@@ -67,8 +77,9 @@ type LLMResponse = {
 ```prisma
 model User {
   id       String    @id @default(cuid())
-  email    String    @unique
+  email    String?   @unique  // Null for anonymous users
   meetings Meeting[]
+  isAnonymous Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -85,6 +96,7 @@ model Meeting {
   todos          Todo[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  expiresAt      DateTime? // For anonymous user meetings
 }
 
 model Todo {
@@ -97,16 +109,27 @@ model Todo {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// Anonymous User Limits
+const ANONYMOUS_USER_LIMITS = {
+  maxMeetings: 3,           // Maximum number of meetings per anonymous user
+  maxDurationPerMeeting: 5, // Maximum duration in minutes per meeting
+  meetingExpiry: 24,        // Hours before meeting is deleted
+  maxStoragePerUser: 50     // Maximum storage in MB per anonymous user
+};
 ```
 
 ## 5. File Storage
 
-- Development: Local filesystem using minio/s3rver
-- Production: S3-compatible object storage
+- Simple local filesystem storage for both development and production
+- File Structure:
+  - /uploads/audio/: Audio recordings
+  - /uploads/transcripts/: Generated transcripts
+- File Naming: UUID-based unique filenames
 - Retention Policy:
   - Audio files: 1 year
   - Transcripts: Indefinite
-  - Todo lists: Indefinite
+  - Todo lists: Stored in database
 
 ## 6. API Endpoints
 

@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { toast } from "sonner";
 
 interface AudioRecorderProps {
-  readonly onRecordingComplete: (audioBlob: Blob) => void;
+  readonly onRecordingComplete: (audioBlob: Blob, duration: number) => void;
 }
 
 export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
@@ -34,7 +34,7 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
 
       mediaRecorder.addEventListener("stop", () => {
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-        onRecordingComplete(audioBlob);
+        onRecordingComplete(audioBlob, timer);
 
         // Stop all tracks
         stream.getTracks().forEach((track) => track.stop());

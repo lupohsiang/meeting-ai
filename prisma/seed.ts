@@ -18,6 +18,7 @@ async function main() {
     data: {
       email: "test@example.com",
       name: "Test User",
+      id: "default",
       // Note: In production, you'd want to hash passwords properly
       emailVerified: new Date(),
     },
