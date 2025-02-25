@@ -66,14 +66,14 @@ I'll create a comprehensive todo list that breaks down the implementation steps.
 
 ### File Storage
 
-- [ ] Set up S3 client
-  - [ ] Configure local storage (development)
-  - [ ] Implement upload functionality
-  - [ ] Add file naming convention
-  - [ ] Create cleanup procedures
-  - [ ] Add progress tracking
-  - [ ] Implement error handling
-  - [ ] Add retry logic
+- [x] Set up local file storage
+  - [x] Create uploads directory structure (/uploads/audio and /uploads/transcripts)
+  - [x] Implement UUID-based file naming
+  - [x] Add file upload functionality
+  - [x] Implement retention policy (1 year for audio, indefinite for transcripts)
+  - [x] Add progress tracking
+  - [x] Implement error handling
+  - [x] Add storage space verification
 
 ## Phase 3: Transcription
 
