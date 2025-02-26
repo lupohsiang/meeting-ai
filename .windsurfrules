@@ -12,6 +12,11 @@ Data Fetching and Mutation
 
 - Use tRPC for data fetching and mutation.
 
+Implementation
+
+- Check dependencies before installing new dependencies and reuse existing ones where possible.
+- Check service and utility functions before creating new ones and reuse existing ones where possible.
+
 Naming Conventions
 
 - Use lowercase with dashes for directories (e.g., components/auth-wizard).

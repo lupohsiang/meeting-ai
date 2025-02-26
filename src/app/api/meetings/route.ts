@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { saveAudioFile } from "~/server/utils/file-storage";
 import { db } from "~/server/db";
+import { transcriptionQueue } from "~/server/transcription/queue";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(request: Request) {
   try {
     // TODO: Check authentication
     const formData = await request.formData();
     const audioBlob = formData.get("audio") as Blob;
+    const duration = Number(formData.get("duration") ?? 0);
 
     if (!audioBlob) {
       return NextResponse.json(
@@ -23,13 +26,26 @@ export async function POST(request: Request) {
       data: {
         title: `Meeting ${new Date().toLocaleString()}`,
         audioFilePath: path,
-        duration: 0, // Will be updated after processing
-        transcript: "", // Will be filled after transcription
-        userId: "default",
+        duration,
+        transcript: "",
+        transcriptionStatus: "pending",
+        userId: "default", // TODO: Get from auth session
       },
     });
 
-    return NextResponse.json({ meetingId: meeting.id, filename });
+    // Add to transcription queue
+    await transcriptionQueue.addJob({
+      id: uuidv4(),
+      audioFilePath: path,
+      userId: meeting.userId,
+      meetingId: meeting.id,
+    });
+
+    return NextResponse.json({ 
+      meetingId: meeting.id, 
+      filename,
+      message: "Meeting saved and queued for transcription" 
+    });
   } catch (error) {
     console.error("Error handling meeting recording:", error);
 
