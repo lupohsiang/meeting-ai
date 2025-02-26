@@ -39,6 +39,7 @@ UI and Styling
 
 - Use Shadcn UI, Radix, and Tailwind for components and styling.
 - Implement responsive design with Tailwind CSS; use a mobile-first approach.
+- To install Shadcn UI components: pnpm dlx shadcn@latest add {component name}
 
 Performance Optimization
 
