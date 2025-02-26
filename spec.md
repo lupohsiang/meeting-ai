@@ -13,7 +13,7 @@ A web application that records meetings, transcribes them, and automatically ext
   - Prisma
   - SQLite (Development) / PostgreSQL (Production)
 - Audio Processing: Web Audio API
-- Transcription: nodejs-whisper (base model)
+- Transcription: OpenAI Whisper API (primary), nodejs-whisper (fallback)
 - LLM Integration: Token.js with OpenAI GPT-4o-mini
 - File Storage: S3-compatible storage (minio/s3rver for development)
 
@@ -41,10 +41,23 @@ A web application that records meetings, transcribes them, and automatically ext
 ### 3.2 Transcription
 
 - Process: Batch processing after recording completion
-- Model: Whisper base model
+- Primary Provider: OpenAI Whisper API
+- Fallback Provider: Local Whisper base model
+- Multi-format Output: Text, SRT, VTT, and JSON
 - Configuration:
 
 ```typescript
+// OpenAI Whisper Configuration
+const openAIConfig = {
+  apiKey: process.env.OPENAI_API_KEY,
+  model: "whisper-1",
+  responseFormat: "verbose_json", // Provides comprehensive JSON output
+  language: "en", // Language code (optional)
+  temperature: 0, // For maximum accuracy
+  timeoutSeconds: 60, // Configurable timeout
+};
+
+// Local Whisper Fallback Configuration
 const whisperConfig = {
   modelName: "base",
   removeWavFileAfterTranscription: false,

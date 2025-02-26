@@ -3,11 +3,15 @@ import {
   whisperConfig,
   MAX_RETRIES,
   RETRY_DELAY_MS,
+  TRANSCRIPTION_PROVIDERS,
+  DEFAULT_PROVIDER,
+  openAIConfig,
 } from "./config";
 import { nodewhisper } from "nodejs-whisper";
 import { logger } from "~/utils/logger";
 import { createConsoleAdapter } from "~/utils/logger-adapter";
 import { convertToWav } from "~/server/utils/audio-converter";
+import { transcribeWithOpenAI } from "./openai-service";
 import path from "path";
 import fs from "fs";
 
@@ -15,7 +19,7 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-interface TranscriptionResult {
+export interface TranscriptionResult {
   text: string;
   srt?: string;
   vtt?: string;
@@ -43,35 +47,44 @@ export async function processTranscription(
         ? absolutePath
         : convertToWav(absolutePath);
 
-      // Process transcription
-      await nodewhisper(wavPath, {
-        ...whisperConfig,
-        logger: createConsoleAdapter(logger),
-      });
-
-      // Get output paths
-      const basePath = absolutePath.replace(/\.[^/.]+$/, "");
-      const outputs = {
-        text: `${basePath}.txt`,
-        srt: `${basePath}.srt`,
-        vtt: `${basePath}.vtt`,
-        json: `${basePath}.json`,
-      };
-
-      // Read outputs
-      const result: TranscriptionResult = {
-        text: await readFileIfExists(outputs.text),
-      };
-
-      if (whisperConfig.whisperOptions?.outputInSrt)
-        result.srt = await readFileIfExists(outputs.srt);
-
-      if (whisperConfig.whisperOptions?.outputInVtt)
-        result.vtt = await readFileIfExists(outputs.vtt);
-
-      if (whisperConfig.whisperOptions?.outputInJson)
-        result.json = JSON.parse(await readFileIfExists(outputs.json));
-
+      // Decide which transcription service to use (default to OpenAI)
+      const provider = job.provider || DEFAULT_PROVIDER;
+      
+      let result: TranscriptionResult;
+      
+      if (provider === TRANSCRIPTION_PROVIDERS.OPENAI) {
+        // Use OpenAI API
+        result = await transcribeWithOpenAI(
+          { ...job, audioFilePath: wavPath },
+          openAIConfig
+        );
+      } else {
+        // Use local Whisper
+        // Process transcription
+        await nodewhisper(wavPath, {
+          ...whisperConfig,
+          logger: createConsoleAdapter(logger),
+        });
+      
+        // Get the paths of the output files
+        const basePath = wavPath.replace(/\.[^/.]+$/, "");
+        const textPath = `${basePath}.txt`;
+        const srtPath = `${basePath}.srt`;
+        const vttPath = `${basePath}.vtt`;
+        const jsonPath = `${basePath}.json`;
+        
+        // Read the output files
+        result = {
+          text: fs.existsSync(textPath) ? fs.readFileSync(textPath, "utf8") : "",
+          srt: fs.existsSync(srtPath) ? fs.readFileSync(srtPath, "utf8") : undefined,
+          vtt: fs.existsSync(vttPath) ? fs.readFileSync(vttPath, "utf8") : undefined,
+          json: fs.existsSync(jsonPath)
+            ? JSON.parse(fs.readFileSync(jsonPath, "utf8"))
+            : undefined,
+        };
+      }
+      
+      // Return the transcription result
       logger.info(`Successfully transcribed job ${job.id}`);
       return result;
     } catch (error) {

@@ -39,12 +39,13 @@ export async function POST(request: Request) {
       audioFilePath: path,
       userId: meeting.userId,
       meetingId: meeting.id,
+      provider: "openai",
     });
 
-    return NextResponse.json({ 
-      meetingId: meeting.id, 
+    return NextResponse.json({
+      meetingId: meeting.id,
       filename,
-      message: "Meeting saved and queued for transcription" 
+      message: "Meeting saved and queued for transcription",
     });
   } catch (error) {
     console.error("Error handling meeting recording:", error);

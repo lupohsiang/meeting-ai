@@ -16,6 +16,7 @@ Implementation
 
 - Check dependencies before installing new dependencies and reuse existing ones where possible.
 - Check service and utility functions before creating new ones and reuse existing ones where possible.
+- Check if the codebase already have similar functionality and follow the pattern where possible.
 
 Naming Conventions
 

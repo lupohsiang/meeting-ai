@@ -1,6 +1,18 @@
 import { z } from "zod";
 import type { IOptions } from "nodejs-whisper";
+import { openaiConfigSchema, type OpenAIConfig } from "./openai-service";
+import { env } from "~/env";
 
+// Define transcription providers
+export const TRANSCRIPTION_PROVIDERS = {
+  LOCAL_WHISPER: "local_whisper",
+  OPENAI: "openai",
+} as const;
+
+// Default provider
+export const DEFAULT_PROVIDER = TRANSCRIPTION_PROVIDERS.OPENAI;
+
+// Local Whisper models
 export const MODELS = {
   TINY: "tiny",
   TINY_EN: "tiny.en",
@@ -15,6 +27,7 @@ export const MODELS = {
   LARGE_V3: "large-v3-turbo",
 } as const;
 
+// Configuration for local Whisper
 export const whisperConfig: IOptions = {
   modelName: MODELS.BASE,
   removeWavFileAfterTranscription: false,
@@ -32,13 +45,23 @@ export const whisperConfig: IOptions = {
   },
 } as const;
 
+// Configuration for OpenAI Whisper
+export const openAIConfig: OpenAIConfig = {
+  apiKey: env.OPENAI_API_KEY,
+  model: "whisper-1",
+  responseFormat: "verbose_json",
+  temperature: 0,
+  timestampGranularities: ["word", "segment"],
+};
+
 export const TranscriptionJobSchema = z.object({
   id: z.string(),
   audioFilePath: z.string(),
   userId: z.string(),
   meetingId: z.string(),
+  provider: z.enum([TRANSCRIPTION_PROVIDERS.LOCAL_WHISPER, TRANSCRIPTION_PROVIDERS.OPENAI]).optional().default(DEFAULT_PROVIDER),
   status: z.enum(["pending", "processing", "completed", "failed"]),
-  attempts: z.number(),
+  attempts: z.number().int().nonnegative(),
   error: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),

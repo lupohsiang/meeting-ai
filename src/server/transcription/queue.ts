@@ -75,7 +75,7 @@ class TranscriptionQueue {
           transcript: result.text,
           transcriptSrt: result.srt,
           transcriptVtt: result.vtt,
-          transcriptJson: result.json as object | null,
+          transcriptJson: result.json ? JSON.stringify(result.json) : null,
           transcriptionStatus: "completed",
         },
       });
@@ -84,7 +84,14 @@ class TranscriptionQueue {
       this.queue.shift();
       logger.info(`Successfully processed transcription job: ${job.id}`);
     } catch (error) {
-      logger.error(`Failed to process transcription job: ${job.id}`, error);
+      logger.error(`Failed to process transcription job: ${job.id}`);
+      
+      if (error instanceof Error) {
+        logger.error(`Error message: ${error.message}`);
+        logger.error(`Error stack: ${error.stack}`);
+      } else {
+        logger.error(`Unknown error: ${String(error)}`);
+      }
 
       // Update job status in database
       await this.prisma.meeting.update({
