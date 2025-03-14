@@ -78,7 +78,7 @@ model Todo {
     description String
     priority    String   // High, Medium, Low
     isComplete  Boolean  @default(false)
-    meeting     Meeting  @relation(fields: [meetingId], references: [id])
+    meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
     meetingId   String
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt

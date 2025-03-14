@@ -137,8 +137,10 @@ export const meetingRouter = createTRPCRouter({
           response_format: { type: "json_object" },
         });
 
-        const content = response.choices[0]?.message.content || "{}";
-        const extractedData = JSON.parse(content);
+        const content = response.choices[0]?.message.content ?? "{}";
+        const extractedData = JSON.parse(content) as {
+          todos?: Array<{ description: string; priority: string }>;
+        };
 
         if (!extractedData.todos || !Array.isArray(extractedData.todos)) {
           throw new Error("Invalid response format from AI");
@@ -198,5 +200,29 @@ export const meetingRouter = createTRPCRouter({
       });
 
       return updatedTodo;
+    }),
+
+  // Delete meeting and all associated todos
+  deleteMeeting: publicProcedure
+    .input(
+      z.object({
+        meetingId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const meeting = await ctx.db.meeting.findUnique({
+        where: { id: input.meetingId },
+      });
+
+      if (!meeting) {
+        throw new Error("Meeting not found");
+      }
+
+      // Delete the meeting (todos will be deleted automatically via cascading delete)
+      await ctx.db.meeting.delete({
+        where: { id: input.meetingId },
+      });
+
+      return { success: true };
     }),
 });

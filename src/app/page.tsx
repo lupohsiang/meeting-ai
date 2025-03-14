@@ -11,7 +11,7 @@ export default async function Home() {
     <HydrateClient>
       <main className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-[#2e026d] to-[#15162c] px-4 py-16 text-white">
         <div className="container flex flex-col items-center justify-center gap-12">
-          <h1 className="text-center text-5xl font-extrabold tracking-tight sm:text-[5rem]">
+          <h1 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
             Meeting <span className="text-[hsl(280,100%,70%)]">AI</span>
           </h1>
 

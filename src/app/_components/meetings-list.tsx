@@ -4,10 +4,39 @@ import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
-import { CheckCircle, Circle, Clock, AlertCircle, CheckSquare } from "lucide-react";
+import { CheckCircle, Circle, Clock, AlertCircle, CheckSquare, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
+import { useState } from "react";
 
 export function MeetingsList() {
-  const { data: meetings, isLoading, error } = api.meeting.getAll.useQuery();
+  const [meetingToDelete, setMeetingToDelete] = useState<string | null>(null);
+  const [deletingMeetings, setDeletingMeetings] = useState<Set<string>>(new Set());
+  const { data: meetings, isLoading, error, refetch } = api.meeting.getAll.useQuery();
+  const deleteMeeting = api.meeting.deleteMeeting.useMutation({
+    onMutate: (variables) => {
+      setDeletingMeetings(prev => new Set(prev).add(variables.meetingId));
+    },
+    onSuccess: () => {
+      void refetch();
+    },
+    onSettled: (data, error, variables) => {
+      setDeletingMeetings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(variables.meetingId);
+        return newSet;
+      });
+    },
+  });
   
   // Loading state
   if (isLoading) {
@@ -77,7 +106,10 @@ export function MeetingsList() {
     <div className="rounded-xl bg-white/10 p-6">
       <ul className="divide-y divide-white/10">
         {meetings.map((meeting) => (
-          <li key={meeting.id} className="py-4">
+          <li 
+            key={meeting.id} 
+            className={`py-4 transition-all duration-300 ${deletingMeetings.has(meeting.id) ? 'opacity-50 scale-95 bg-red-900/20' : ''}`}
+          >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-medium">{meeting.title}</h3>
@@ -110,11 +142,47 @@ export function MeetingsList() {
                   </Tooltip>
                 </TooltipProvider>
 
-                <Link href={`/transcription?meetingId=${meeting.id}`}>
-                  <Button size="sm" variant="ghost">
-                    View
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link href={`/transcription?meetingId=${meeting.id}`}>
+                    <Button size="sm" variant="ghost">
+                      View
+                    </Button>
+                  </Link>
+                  
+                  <AlertDialog open={meetingToDelete === meeting.id} onOpenChange={(open: boolean) => !open && setMeetingToDelete(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        onClick={() => setMeetingToDelete(meeting.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete the meeting &quot;{meeting.title}&quot; and all associated to-do items. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-600 hover:bg-red-700"
+                          onClick={() => {
+                            deleteMeeting.mutate({ meetingId: meeting.id });
+                            setMeetingToDelete(null);
+                          }}
+                          disabled={deletingMeetings.has(meeting.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </div>
           </li>
