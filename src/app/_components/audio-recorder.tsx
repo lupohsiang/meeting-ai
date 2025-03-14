@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { toast } from "sonner";
+import { cn } from "~/lib/utils";
 
 interface AudioRecorderProps {
   readonly onRecordingComplete: (audioBlob: Blob, duration: number) => void;
@@ -53,7 +54,7 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
         "Failed to start recording. Please check microphone permissions.",
       );
     }
-  }, [onRecordingComplete]);
+  }, [onRecordingComplete, timer]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -111,25 +112,39 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
       >
         {formatTime(timer)}
       </div>
-      <Button
-        ref={buttonRef}
-        size="lg"
-        className={`h-16 w-16 rounded-full p-0 transition-all duration-200 ${
-          isRecording
-            ? "bg-red-500 hover:bg-red-600"
-            : "bg-blue-500 hover:bg-blue-600"
-        }`}
-        onClick={isRecording ? stopRecording : startRecording}
-        aria-label={isRecording ? "Stop recording" : "Start recording"}
-      >
+      <div className="relative">
+        {/* Glowing effect background */}
         <div
-          className={`${
-            isRecording
-              ? "h-6 w-6 rounded bg-white"
-              : "h-4 w-4 rounded-full bg-white"
-          }`}
+          className={cn(
+            "absolute -inset-0.5 rounded-full opacity-75 blur-md transition-all duration-500",
+            isRecording ? 
+              "animate-pulse bg-gradient-to-r from-red-500 via-pink-500 to-red-500" : 
+              "bg-gradient-to-r from-blue-400 via-cyan-500 to-blue-500"
+          )}
         />
+        {/* Main button with gradient */}
+        <Button
+          ref={buttonRef}
+          size="lg"
+          className={cn(
+            "relative h-16 w-16 rounded-full p-0 transition-all duration-300",
+            isRecording ?
+              "animate-[pulse_1.5s_ease-in-out_infinite] bg-gradient-to-r from-red-500 via-pink-600 to-red-500" :
+              "hover:shadow-lg hover:shadow-blue-300/50 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500"
+          )}
+          onClick={isRecording ? stopRecording : startRecording}
+          aria-label={isRecording ? "Stop recording" : "Start recording"}
+        >
+          <div
+            className={cn(
+              "transition-all duration-200",
+              isRecording ?
+                "h-6 w-6 rounded bg-white" :
+                "h-4 w-4 rounded-full bg-white shadow-inner"
+            )}
+          />
       </Button>
+      </div>
       <div className="text-sm text-gray-500" aria-live="polite">
         {isRecording ? (
           <span>
