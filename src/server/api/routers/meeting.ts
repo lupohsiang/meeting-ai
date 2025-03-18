@@ -74,9 +74,9 @@ export const meetingRouter = createTRPCRouter({
       // Update meeting status
       await ctx.db.meeting.update({
         where: { id: input.id },
-        data: { 
+        data: {
           transcriptionStatus: "pending",
-          transcript: "" // Clear previous transcript
+          transcript: "", // Clear previous transcript
         },
       });
 
@@ -94,9 +94,11 @@ export const meetingRouter = createTRPCRouter({
 
   // Extract to-do items from transcript
   extractTodos: publicProcedure
-    .input(z.object({ 
-      meetingId: z.string(),
-    }))
+    .input(
+      z.object({
+        meetingId: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const meeting = await ctx.db.meeting.findUnique({
         where: { id: input.meetingId },
@@ -118,63 +120,69 @@ export const meetingRouter = createTRPCRouter({
       try {
         // Use OpenAI to extract todos from the transcript
         const response = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
+          model: "gpt-4o-mini",
           messages: [
             {
               role: "system",
               content: `Extract all action items and to-dos from the following meeting transcript. 
               Return a JSON object with the format {"todos": [{"description": "Task description", "priority": "High"}, ...]}.
               Set priority as "High", "Medium", or "Low" based on your judgment.
-              Only include clear action items, not general discussion points.`
+              Only include clear action items, not general discussion points.`,
             },
             {
               role: "user",
-              content: meeting.transcript
-            }
+              content: meeting.transcript,
+            },
           ],
           response_format: { type: "json_object" },
         });
 
         const content = response.choices[0]?.message.content || "{}";
         const extractedData = JSON.parse(content);
-        
+
         if (!extractedData.todos || !Array.isArray(extractedData.todos)) {
           throw new Error("Invalid response format from AI");
         }
 
         // Delete existing todos for this meeting
         await ctx.db.todo.deleteMany({
-          where: { meetingId: meeting.id }
+          where: { meetingId: meeting.id },
         });
 
         // Create new todos
         const createdTodos = await Promise.all(
-          extractedData.todos.map(async (todo: { description: string; priority: string }) => {
-            return ctx.db.todo.create({
-              data: {
-                description: todo.description,
-                priority: todo.priority || "Medium",
-                meetingId: meeting.id,
-              },
-            });
-          })
+          extractedData.todos.map(
+            async (todo: { description: string; priority: string }) => {
+              return ctx.db.todo.create({
+                data: {
+                  description: todo.description,
+                  priority: todo.priority || "Medium",
+                  meetingId: meeting.id,
+                },
+              });
+            },
+          ),
         );
 
-        return { 
-          success: true, 
-          todos: createdTodos 
+        return {
+          success: true,
+          todos: createdTodos,
         };
       } catch (error) {
         console.error("Error extracting todos:", error);
-        throw new Error(`Failed to extract todos: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+          `Failed to extract todos: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
     }),
 
   // Toggle todo completion
   toggleTodoCompletion: publicProcedure
-    .input(z.object({
-      todoId: z.string(),
-    }))
+    .input(
+      z.object({
+        todoId: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const todo = await ctx.db.todo.findUnique({
         where: { id: input.todoId },
